@@ -1,0 +1,137 @@
+
+@red : #d9534f;
+@green : #4cae4c;
+@blue : #337ab7;
+
+
+
+body {
+  font-family: 'Roboto', sans-serif;
+  margin: 0;
+  color: #333;
+}
+
+.status-header {
+  background-color: @green;
+  color: white;
+  padding: 4px 6px;
+  font-weight: 300;
+  margin-bottom: 20px;
+    .status-error {
+      display: none;
+    }
+
+    &.error{
+
+      background-color: @red;
+
+      .status-error {
+        display: inline-block;
+      }
+      .status-ok {
+        display: none;
+      }
+    }
+}
+
+.right {
+  float: right;
+}
+
+.zenbot-home {
+  margin: ;
+  max-width: 400px;
+  @media only screen and (max-device-width : 500px) {
+     max-width: 100%;
+  }
+}
+
+.currency {
+  font-size: 20px;
+  padding: 4px 10px;
+  color: #666;
+}
+
+.totals {
+  display: flex;
+  width: 100%;
+  .currencies {
+    flex: 2 1;
+  }
+  .usd-total {
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    flex-direction: column;
+    flex: 1 1;
+    background-color: #666;
+    color: white;
+
+  }
+}
+
+.price {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  flex-direction: column;
+  padding-top: 20px;
+  padding-bottom: 5px;
+  .product {
+    font-size: 16px;
+  }
+}
+
+.chart-price {
+  margin-top:  28px;
+  padding-left: 4px;
+  color: @red;
+  font-size: 17px;
+}
+
+.chart {
+  display: flex;
+}
+
+
+.sparkline {
+  fill: none;
+  stroke: #000;
+  stroke-width: 1px;
+}
+
+.sparkcircle {
+  fill: @red;
+  stroke: none;
+}
+
+table {
+  border-collapse: collapse;
+  margin-top: 10px;
+  width:100%;
+  font-size: 18px;
+
+  thead {
+    color: @blue;
+  //  color: white;
+  //  font-size: 14px;
+    th {
+      font-weight: 400;
+      padding: 4px 0px ;
+    }
+  }
+
+  td {
+    text-align: center;
+  }
+}
+
+
+line {
+  stroke-width: 1;
+  stroke: @blue;
+  stroke-dasharray: 5 5;
+}

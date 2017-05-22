@@ -1,0 +1,92 @@
+<div class="zenbot-home">
+    <div class="status-header"
+        ng-class="{'error': data.balance.calculated.timeCalculated-data.updated > 1000*60*2}">
+       <span class="left">
+            {{data.options.strategy}}
+       </span>
+       <span class="right status-ok">
+            {{data.updated | date: 'HH:mm:ss'}} ({{printTimeElapsed((data.updated-data.started)/1000)}} up)
+       </span>
+       <span class="right status-error">
+            DOWN FOR {{printTimeElapsed((data.balance.calculated.timeCalculated-data.updated)/1000)}}
+       </span>
+    </div>
+    <div class="totals">
+        <div class="usd-total">
+            <div class="label">
+                USD
+            </div>
+
+            <div class="metric">
+                {{data.balance.calculated.usdTotal | currency : '$' : 2}}
+            </div>
+
+        </div>
+        <div class="currencies">
+            <div class="currency" ng-repeat="c in data.balance.calculated.currencies">
+               <span class="left">
+                    {{c}}
+               </span>
+               <span class="right">
+                    {{data.balance.calculated.balances[c] | number : 5}}
+               </span>
+            </div>
+        </div>
+
+
+    </div>
+
+    <div class="price">
+        <div class="product">{{data.balance.calculated.currencies[0]}}-{{data.balance.calculated.currencies[1]}}</div>
+    </div>
+
+    <div class="chart">
+        <span id="spark_goog">
+
+        </span>
+        <span class="chart-price">{{data.price}}</span>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>{{data.balance.calculated.currencies[0]}}</th>
+                <th>{{data.balance.calculated.currencies[1]}}</th>
+                <th>{{data.balance.calculated.currencies[0]}}-{{data.balance.calculated.currencies[1]}}</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr ng-repeat="balance in data.balances">
+                <td>{{balance.time | date: 'M/dd HH:mm'}}</td>
+                <td>{{balance.asset | number : 5}}</td>
+                <td>{{balance.currency | number : 5}}</td>
+                <td>{{balance.price | number : 5}}</td>
+            </tr>
+        </tbody>
+    </table>
+<br><br>
+
+    <table>
+        <thead>
+        <tr>
+            <th>Duration</th>
+            <th>Range</th>
+            <th>RSI</th>
+            <th>EMA</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr ng-repeat="period in data.periods">
+            <td>{{period.time | date: 'HH:mm'}} - {{period.close_time | date: 'HH:mm'}}</td>
+            <td>{{period.low | number : 5}} - {{period.high | number : 5}}</td>
+            <td>{{period.rsi}}</td>
+            <td>{{period.trend_ema | number : 5}}</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <br><br><br><br>
+    {{stringData}}
+
+</div>
