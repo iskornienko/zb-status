@@ -10,6 +10,7 @@
     "gdax": "^0.4.2",
     "mongo-oplog": "^2.0.2",
     "mongod": "^2.0.0",
+    "mongodb": "^2.2.27",
     "socket.io": "^2.0.1"
   },
   "devDependencies": {
