@@ -6,6 +6,7 @@
     "dev": "webpack-dev-server --config ./webpack.config.js  --port 8089 --http  --inline --history-api-fallback --hot"
   },
   "dependencies": {
+    "debug": "^2.6.8",
     "express": "^4.15.3",
     "gdax": "^0.4.2",
     "mongo-oplog": "^2.0.2",
