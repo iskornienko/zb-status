@@ -9,11 +9,12 @@
     "express": "^4.15.3",
     "gdax": "^0.4.2",
     "mongo-oplog": "^2.0.2",
+    "mongod": "^2.0.0",
     "socket.io": "^2.0.1"
   },
   "devDependencies": {
     "babel-core": "^6.20.0",
-    "babel-polyfill" : "*",
+    "babel-polyfill": "*",
     "babel-loader": "^6.2.9",
     "babel-preset-es2015": "*",
     "babel-preset-stage-0": "^6.22.0",
@@ -28,5 +29,6 @@
     "script-loader": "^0.7.0",
     "style-loader": "0.13.1",
     "webpack": "1.14.0",
-    "webpack-dev-server": "1.16.2"}
+    "webpack-dev-server": "1.16.2"
+  }
 }
