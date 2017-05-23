@@ -10,6 +10,7 @@
     "destroy": "^1.0.4",
     "ee-first": "^1.1.1",
     "express": "^4.15.3",
+    "forwarded": "^0.1.0",
     "gdax": "^0.4.2",
     "http-errors": "^1.6.1",
     "mime": "^1.3.6",
