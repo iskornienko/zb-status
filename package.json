@@ -19,6 +19,7 @@
     "mongod": "^2.0.0",
     "mongodb": "^2.2.27",
     "ms": "^2.0.0",
+    "negotiator": "^0.6.1",
     "request": "^2.81.0",
     "socket.io": "^2.0.1",
     "unpipe": "^1.0.0"
