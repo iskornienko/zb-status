@@ -69,9 +69,9 @@ function calcUSDTotalBalance( balance, callback) {
     getLastPrice('BTC', function (btcPrice) {
         getLastPrice('ETH', function (ethPrice) {
 
-            var total = !isNaN(balance.USD) ? balance.USD * 1 : 0;
-            total += !isNaN(balance.ETH) ? balance.ETH * ethPrice : 0;
-            total += !isNaN(balance.BTC) ? balance.BTC * btcPrice : 0;
+            var total = !isNaN(balance.USD) ? Number(balance.USD) * 1 : 0;
+            total += !isNaN(balance.ETH) ? Number(balance.ETH) * ethPrice : 0;
+            total += !isNaN(balance.BTC) ? Number(balance.BTC) * btcPrice : 0;
 
             callback(total);
         })
@@ -163,7 +163,7 @@ app.get('/data', (request, response) => {
 
                     db.collection('my_trades').find({
                         session_id : result[0].id
-                    }).sort({time: -1})
+                    }).sort({time: -1}).limit(100)
                         .toArray(function (err, result2) {
 
                             console.log('RTADES', result2)
@@ -172,7 +172,7 @@ app.get('/data', (request, response) => {
 
                             db.collection('periods').find({
                                 session_id : result[0].id
-                            }).sort({time: -1})
+                            }).sort({time: -1}).limit(100)
                                 .toArray(function (err, result3) {
                                     result[0].periods = result3;
 
