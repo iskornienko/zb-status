@@ -13,6 +13,7 @@
     "forwarded": "^0.1.0",
     "gdax": "^0.4.2",
     "http-errors": "^1.6.1",
+    "ipaddr.js": "^1.3.0",
     "mime": "^1.3.6",
     "mongo-oplog": "^2.0.2",
     "mongod": "^2.0.0",
