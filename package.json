@@ -6,6 +6,7 @@
     "dev": "webpack-dev-server --config ./webpack.config.js  --port 8089 --http  --inline --history-api-fallback --hot"
   },
   "dependencies": {
+    "base64id": "^1.0.0",
     "debug": "^2.6.8",
     "destroy": "^1.0.4",
     "ee-first": "^1.1.1",
