@@ -7,6 +7,7 @@
   },
   "dependencies": {
     "debug": "^2.6.8",
+    "destroy": "^1.0.4",
     "ee-first": "^1.1.1",
     "express": "^4.15.3",
     "gdax": "^0.4.2",
