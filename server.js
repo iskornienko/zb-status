@@ -69,7 +69,7 @@ function calcUSDTotalBalance( balance, callback) {
     getLastPrice('BTC', function (btcPrice) {
         getLastPrice('ETH', function (ethPrice) {
 
-            var total = !isNaN(balance.USD) ? balance.USD : 0;
+            var total = !isNaN(balance.USD) ? balance.USD * 1 : 0;
             total += !isNaN(balance.ETH) ? balance.ETH * ethPrice : 0;
             total += !isNaN(balance.BTC) ? balance.BTC * btcPrice : 0;
 
