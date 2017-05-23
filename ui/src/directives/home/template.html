@@ -47,21 +47,21 @@
         <span class="chart-price">{{data.price}}</span>
     </div>
 
-    <table>
+    <table ng-if="data.myTrades.length > 0">
         <thead>
             <tr>
-                <th>Date</th>
-                <th>{{data.balance.calculated.currencies[0]}}</th>
-                <th>{{data.balance.calculated.currencies[1]}}</th>
-                <th>{{data.balance.calculated.currencies[0]}}-{{data.balance.calculated.currencies[1]}}</th>
+                <th>Trade Time</th>
+                <th>Type</th>
+                <th>Size</th>
+                <th>Price</th>
             </tr>
         </thead>
         <tbody>
-            <tr ng-repeat="balance in data.balances">
-                <td>{{balance.time | date: 'M/dd HH:mm'}}</td>
-                <td>{{balance.asset | number : 5}}</td>
-                <td>{{balance.currency | number : 5}}</td>
-                <td>{{balance.price | number : 5}}</td>
+            <tr ng-repeat="trade in data.myTrades">
+                <td>{{trade.time | date: 'M/dd HH:mm'}}</td>
+                <td>{{trade.type}} ({{trade.selector.split('.')[1]}})</td>
+                <td>{{trade.size | number : 5}}</td>
+                <td>{{trade.price | number : 5}}</td>
             </tr>
         </tbody>
     </table>
@@ -70,18 +70,20 @@
     <table>
         <thead>
         <tr>
-            <th>Duration</th>
-            <th>Range</th>
-            <th>RSI</th>
+            <th>Period Start</th>
+            <th>Close Price</th>
+            <th>Volume</th>
             <th>EMA</th>
+            <th>RSI</th>
         </tr>
         </thead>
         <tbody>
         <tr ng-repeat="period in data.periods">
-            <td>{{period.time | date: 'HH:mm'}} - {{period.close_time | date: 'HH:mm'}}</td>
-            <td>{{period.low | number : 5}} - {{period.high | number : 5}}</td>
+            <td>{{period.time | date: 'M/dd HH:mm'}}</td>
+            <td>{{period.close | number : 5}}</td>
+            <td>{{period.volume | number : 0}}</td>
+            <td>{{period.trend_ema_rate | number : 3}}</td>
             <td>{{period.rsi}}</td>
-            <td>{{period.trend_ema | number : 5}}</td>
         </tr>
         </tbody>
     </table>

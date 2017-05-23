@@ -92,7 +92,7 @@ app.get('/chart-data/:selector', (request, response) => {
             .toArray(function (err, result) {
                 if (err) throw err;
 
-                console.log(result);
+            //    console.log(result);
                 var needed = result.reduce(function (acc, current) {
 
                     acc.push({
@@ -147,7 +147,7 @@ app.get('/data', (request, response) => {
         db.collection('sessions').find({}).sort({updated: -1}).limit(1)
             .toArray(function (err, result) {
                 if (err) throw err;
-                console.log(result[0])
+            //    console.log(result[0])
 
                 var trade = result[0].selector.split('.')[1];
                 var currencies = trade.split('-');
@@ -164,11 +164,14 @@ app.get('/data', (request, response) => {
                         timeCalculated: (new Date()).getTime()
                     }
 
-                    db.collection('balances').find({
-                        selector : result[0].selector
+                    db.collection('my_trades').find({
+                        session_id : result[0].id
                     }).sort({time: -1})
                         .toArray(function (err, result2) {
-                            result[0].balances = result2;
+
+                            console.log('RTADES', result2)
+
+                            result[0].myTrades = result2;
 
                             db.collection('periods').find({
                                 session_id : result[0].id

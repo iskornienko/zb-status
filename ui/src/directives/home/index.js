@@ -36,7 +36,7 @@ let app = angular.module('zen-home',[])
                                     .then(function (chartData) {
                                         console.log('GOT IT', chartData)
                                         document.getElementById('spark_goog').innerHTML = '';
-                                        sparkline('#spark_goog', chartData.data, out.data[0].balances);
+                                        sparkline('#spark_goog', chartData.data, out.data[0].myTrades);
                                     })
                             });
                         }
