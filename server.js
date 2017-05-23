@@ -15,36 +15,64 @@ var io = require('socket.io')(server);
 app.use(express.static('ui'));
 
 
+var MongoOplog = require('mongo-oplog');
+var oplog = MongoOplog('mongodb://127.0.0.1:27017/local', { ns: 'zenbot4.periods' });
+var oplog2 = MongoOplog('mongodb://127.0.0.1:27017/local', { ns: 'zenbot4.my_trades' });
 
+oplog.tail().then(() => {
+    console.log('tailing started')
+}).catch(err => console.error(err));
 
-io.on('connection', function(client) {
-    console.log('Client connected...');
+oplog2.tail().then(() => {
+    console.log('tailing started')
+}).catch(err => console.error(err));
 
-/*
-    var MongoOplog = require('mongo-oplog');
-    var oplog = MongoOplog('mongodb://127.0.0.1:27017/local', { ns: 'zenbrain.run_states' });
+var lastUpdate = new Date();
+function refreshFrontEnd(event) {
+    if((new Date()).getTime() - lastUpdate.getTime() > 1000*3) {
+        lastUpdate = new Date();
+        console.log(event, lastUpdate);
 
-    oplog.tail().then(() => {
-        console.log('tailing started')
-    }).catch(err => console.error(err));
-
-    var lastUpdate = new Date();
-
-    oplog.on('update', doc => {
-            console.log((new Date()).getTime() - lastUpdate.getTime());
-        if((new Date()).getTime() - lastUpdate.getTime() > 1000*10) {
+    //    client.emit('update',{});
+    //    client.broadcast.emit('update',{});
+        allClients.forEach(function (client) {
             client.emit('update',{});
             client.broadcast.emit('update',{});
+        })
 
-            lastUpdate = new Date();
-        }
+    }
+}
 
-    });
-*/
+oplog.on('insert', doc => {
+    refreshFrontEnd('INSERT PERIOD');
+})
 
+oplog2.on('insert', doc => {
+    refreshFrontEnd('NEW TRADE');
+})
+
+oplog.on('update', doc => {
+    refreshFrontEnd('UPDATE PERIOD');
+
+});
+
+
+var allClients = [];
+io.on('connection', function(socket) {
+    console.log('Client connected...');
+    allClients.push(socket);
+
+
+    /*
     client.on('join', function(data) {
         console.log(data);
 
+    });*/
+    socket.on('disconnect', function() {
+        console.log('Got disconnect!');
+
+        var i = allClients.indexOf(socket);
+        allClients.splice(i, 1);
     });
 
 });
@@ -166,7 +194,7 @@ app.get('/data', (request, response) => {
                     }).sort({time: -1}).limit(100)
                         .toArray(function (err, result2) {
 
-                            console.log('RTADES', result2)
+                         //   console.log('RTADES', result2)
 
                             result[0].myTrades = result2;
 
