@@ -16,13 +16,7 @@ body {
   color: #333;
 }
 
-.zenbot-home {
-  margin: 15px 15px;
-  max-width: 400px;
-  @media only screen and (max-device-width : 500px) {
-    max-width: 100%;
-  }
-}
+
 
 
 
@@ -161,8 +155,8 @@ line {
 */
 
 line {
-  stroke-width: 1;
-  stroke: @blue;
+  stroke-width: 0.5px;
+  stroke: #999;
   stroke-dasharray: 5 5;
 }
 
@@ -258,13 +252,16 @@ line {
 
 .property {
   display: flex;
-  min-width: 190px;
+  min-width: 160px;
   .name {
     flex: 1 1;
     font-weight: 300;
+    text-align: right;
+    padding-right: 5px;
   }
   .value {
     flex: 1 1;
+    padding-left: 5px;
 
   }
 }
@@ -300,3 +297,28 @@ line {
 .period-chart {
   margin: 10px 10px;
 }
+
+.zenbot-home {
+  margin: 15px 15px;
+  max-width: 500px;
+  @media only screen and (max-device-width : 500px) {
+    max-width: 100%;
+  }
+}
+/*
+
+*/
+/*
+.row {
+  display: flex;
+  background-color: red;
+  @media only screen and (max-device-width : 600px) {
+    background-color: blue;
+  }
+
+}
+
+.col {
+  flex: 1 1;
+
+}*/

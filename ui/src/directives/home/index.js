@@ -88,80 +88,105 @@ let app = angular.module('zen-home',[])
                             }
                         ];
 
-                        $http.get('/data').then(function (out) {
-                            console.log(out);
-                            $scope.data = out.data;
+                        console.log('HAI');
 
-                            $scope.textData = JSON.stringify(out.data);
 
-                            $scope.allPairedTrades = [];
 
-                            //pair buys & sells
-                            for(var x = 0; x < out.data.sessions.length; x++) {
-                                var cSession = out.data.sessions[x];
+                         var socket = io.connect();
+                         socket.on('connect', function(data) {
+                         console.log('connected')
+                         socket.emit('join', 'Hello World from client');
+                         });
 
-                                console.log(cSession)
-                                var cPairedTrade = null;
-                                for(var y = 0; y < cSession.trades.length; y++) {
-                                    var cTrade = cSession.trades[y];
+                         socket.on('update', function(data) {
+                         updateData();
+                         });
 
-                                    console.log(cTrade)
+                        function updateData() {
+                            $http.get('/data').then(function (out) {
+                                $scope.data = out.data;
 
-                                    if(cTrade.type == 'buy') {
+                                $scope.textData = JSON.stringify(out.data);
 
-                                        if(cPairedTrade != null) {
-                                            $scope.allPairedTrades.push(cPairedTrade);
-                                        }
+                                $scope.allPairedTrades = [];
+                                console.log('about to process data', out);
 
-                                        cPairedTrade = {
-                                            session_id: cTrade.session_id,
-                                            buy: cTrade
-                                        }
+                                //pair buys & sells
+                                for(var x = 0; x < out.data.sessions.length; x++) {
+                                    var cSession = out.data.sessions[x];
 
-                                    } else {
-                                        if(cPairedTrade != null) {
-                                            cPairedTrade.sell = cTrade;
-                                        } else {
-                                            cPairedTrade = {
-                                                session_id: cTrade.session_id,
-                                                sell: cTrade
+                                    console.log('processing session', cSession)
+                                    var cPairedTrade = null;
+                                    if(cSession.trades != undefined) {
+
+                                        for(var y = 0; y < cSession.trades.length; y++) {
+                                            var cTrade = cSession.trades[y];
+
+                                            console.log('processing trade', cTrade)
+
+                                            if(cTrade.type == 'buy') {
+
+                                                if(cPairedTrade != null) {
+                                                    $scope.allPairedTrades.push(cPairedTrade);
+                                                }
+
+                                                cPairedTrade = {
+                                                    session_id: cTrade.session_id,
+                                                    buy: cTrade
+                                                }
+
+                                            } else {
+                                                if(cPairedTrade != null) {
+                                                    cPairedTrade.sell = cTrade;
+                                                } else {
+                                                    cPairedTrade = {
+                                                        session_id: cTrade.session_id,
+                                                        sell: cTrade
+                                                    }
+                                                }
+
                                             }
+
                                         }
 
                                     }
 
+                                    if(cPairedTrade != null) {
+                                        $scope.allPairedTrades.push(cPairedTrade);
+                                    }
+
                                 }
 
-                                if(cPairedTrade != null) {
-                                    $scope.allPairedTrades.push(cPairedTrade);
-                                }
 
-                            }
+                                for(var x = 0; x < out.data.sessions.length; x++) {
+                                    var cSession = out.data.sessions[x];
 
+                                    $http.get('/periods/' + cSession.id)
+                                        .then((function (chartData) {
+                                            console.log('GOT IT', chartData)
 
-                            for(var x = 0; x < out.data.sessions.length; x++) {
-                                var cSession = out.data.sessions[x];
+                                            document.getElementById('chart_'+this.cSessionId).innerHTML = '';
 
-                                $http.get('/periods/' + cSession.id)
-                                    .then((function (chartData) {
-                                        console.log('GOT IT', chartData)
+                                            for(var x = 0; x < $scope.data.sessions.length; x++) {
+                                                if($scope.data.sessions[x].id == this.cSessionId) {
+                                                    sparkline('#chart_'+this.cSessionId, chartData.data, $scope.data.sessions[x].trades);
 
-                                        document.getElementById('chart_'+this.cSessionId).innerHTML = '';
+                                                    $scope.data.sessions[x].currentPeriod = chartData.data[chartData.data.length-1];
 
-                                        for(var x = 0; x < $scope.data.sessions.length; x++) {
-                                            if($scope.data.sessions[x].id == this.cSessionId) {
-                                                sparkline('#chart_'+this.cSessionId, chartData.data, $scope.data.sessions[x].trades);
+                                                    console.log('THIS - ',$scope.data.sessions[x])
+                                                }
                                             }
-                                        }
 
-                                    }).bind({cSessionId:cSession.id}));
+                                        }).bind({cSessionId:cSession.id}));
 
-                            }
+                                }
 
 
                                 console.log($scope.allPairedTrades);
 
-                        });
+                            });
+                        }
+                        updateData();
 
                         $scope.printTimeElapsed = function(seconds, shorten) {
 
@@ -199,15 +224,45 @@ let app = angular.module('zen-home',[])
 
                         var parseDate = d3.time.format("%b %d, %Y").parse;
 
+
+                        function addLineToChart(svg, height,x, data, variable, color, strokeWidth) {
+
+                            var line = d3.svg.line()
+                                .x(function(d) {  return x((new Date(d.Date)).getTime()); })
+                                .y(function(d) {  return y(d[variable]); });
+                            var y = d3.scale.linear().range([height - 4, 0]);
+
+
+                            y.domain(d3.extent(data, function(d) { return d[variable]; }));
+
+
+                            svg.append('path')
+                                .datum(data)
+                                .attr('class', 'sparkline')
+                                .style('stroke', color)
+                                .style('stroke-width', strokeWidth)
+                                .attr('d', line);
+
+
+                            svg.append('circle')
+                                .attr('class', 'sparkcircle')
+                                .attr('cx', x(data[data.length-1].date))
+                                .attr('cy', function () {
+                                    if(data[data.length-1][variable] != undefined)
+                                        return y(data[data.length-1][variable]);
+                                    else
+                                        return -10;
+                                })
+                                .style('fill', color)
+                                .attr('r', 2);
+
+                        }
+
                         function sparkline(elemId, data, balances) {
 
                             var width = d3.select(elemId)[0][0].clientWidth;
-                            var height = 80;
+                            var height = 100;
                             var x = d3.scale.linear().range([0, width - 2]);
-                            var y = d3.scale.linear().range([height - 4, 0]);
-                            var line = d3.svg.line()
-                                .x(function(d) {  return x((new Date(d.Date)).getTime()); })
-                                .y(function(d) {  return y(d.close); });
 
                             console.log(data, balances);
 
@@ -217,7 +272,6 @@ let app = angular.module('zen-home',[])
                             });
                             //  console.log(data);
                             x.domain(d3.extent(data, function(d) { return d.date; }));
-                            y.domain(d3.extent(data, function(d) { return d.close; }));
 
                             var svg = d3.select(elemId)
                                 .append('svg')
@@ -226,26 +280,22 @@ let app = angular.module('zen-home',[])
                                 .append('g')
                                 .attr('transform', 'translate(0, 2)');
 
-                            svg.append('path')
-                                .datum(data)
-                                .attr('class', 'sparkline')
-                                .attr('d', line);
+                            addLineToChart(svg, height, x, data, "close", "black", 0.75);
+                            addLineToChart(svg, height, x, data, "rsi", "#337ab7");
+                            addLineToChart(svg, height, x, data, "trend_ema", "#d38312");
 
-                            svg.append('circle')
-                                .attr('class', 'sparkcircle')
-                                .attr('cx', x(data[data.length-1].date))
-                                .attr('cy', y(data[data.length-1].close))
-                                .attr('r', 2);
+                            if(balances != undefined) {
+                                svg.append('g').selectAll("line")
+                                    .data(balances)
+                                    .enter()
+                                    .append("line")
+                                    .attr("x1", function (d) {return x(d.time)})
+                                    .attr("y1", 0)
+                                    .attr("x2", function (d) {return x(d.time)})
+                                    .attr("y2", height)
+                                    .style("stroke-dasharray", function (d) { if(d.type=='buy') return 'none'; else return '5 5'});
 
-
-                            svg.append('g').selectAll("line")
-                                .data(balances)
-                                .enter()
-                                .append("line")
-                                .attr("x1", function (d) {return x(d.time)})
-                                .attr("y1", 0)
-                                .attr("x2", function (d) {return x(d.time)})
-                                .attr("y2", height)
+                            }
                         }
                         
 

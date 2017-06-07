@@ -133,6 +133,8 @@ app.get('/periods/:session_id', (request, response) => {
                         Close : current.close,
                         rsi : current.rsi,
                         trend_ema : current.trend_ema,
+                        volume : current.volume,
+                        trend_ema_rate : current.trend_ema_rate,
                     });
 
                     return acc;
