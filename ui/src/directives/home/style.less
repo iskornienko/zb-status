@@ -4,6 +4,11 @@
 @blue : #337ab7;
 
 
+.border() {
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background-color: #eee;
+}
 
 body {
   font-family: 'Roboto', sans-serif;
@@ -11,6 +16,17 @@ body {
   color: #333;
 }
 
+.zenbot-home {
+  margin: 15px 15px;
+  max-width: 400px;
+  @media only screen and (max-device-width : 500px) {
+    max-width: 100%;
+  }
+}
+
+
+
+/*
 .status-header {
   background-color: @green;
   color: white;
@@ -39,7 +55,6 @@ body {
 }
 
 .zenbot-home {
-  margin: ;
   max-width: 400px;
   @media only screen and (max-device-width : 500px) {
      max-width: 100%;
@@ -142,4 +157,146 @@ line {
   stroke-width: 1;
   stroke: @blue;
   stroke-dasharray: 5 5;
+}
+*/
+
+line {
+  stroke-width: 1;
+  stroke: @blue;
+  stroke-dasharray: 5 5;
+}
+
+.sparkline {
+  fill: none;
+  stroke: #000;
+  stroke-width: 0.5px;
+}
+
+.sparkcircle {
+  fill: @red;
+  stroke: none;
+}
+
+.section-header {
+  font-size: 1.5rem;
+  margin-top: 15px;
+  margin-bottom: 5px;
+  text-align: center;
+}
+
+.balances {
+  margin: 5px 0px;
+  display: flex;
+  justify-content: center;
+}
+
+.balance {
+  min-width: 80px;
+  text-align: center;
+  .amount {
+    font-size: 1.1em;
+  }
+  .currency {
+    font-size: 1.4em;
+
+  }
+  .day-change {
+    font-size: 0.8em;
+  }
+}
+
+.usd-total {
+  margin: 5px 0px;
+  text-align: center;
+  font-size: 1.3em;
+  font-weight: 100;
+}
+
+.sessions-header {
+  display: flex;
+  padding: 0px 6px;
+  font-size: 0.8em;
+  font-weight: bold;
+}
+.s-col {
+  flex: 1 1;
+  text-align: center;
+  .value {
+
+  }
+  .sub-title {
+    font-size: 0.8em;
+  }
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.sessions {
+
+}
+
+.session {
+  padding: 5px 5px;
+  margin-top: 5px;
+  .border();
+  cursor: pointer;
+
+}
+
+.session-head {
+  display: flex;
+}
+
+.property-list {
+  display: flex;
+  flex-wrap: wrap;
+  flex-flow: row wrap;
+  margin-top: 10px;
+
+  font-size: .8em;
+}
+
+.property {
+  display: flex;
+  min-width: 190px;
+  .name {
+    flex: 1 1;
+    font-weight: 300;
+  }
+  .value {
+    flex: 1 1;
+
+  }
+}
+
+.trade-buy-sell {
+  .s-col {
+    font-size: 1.5em;
+    font-weight: normal;
+  }
+}
+
+.bigger {
+  font-size: 1.2em;
+}
+
+.left-align {
+  text-align: left;
+  padding-left: 5px;
+}
+.right-align {
+  text-align: right;
+  padding-right: 5px;
+}
+
+
+.red-text {
+  color: @red;
+}
+.green-text {
+  color: @green;
+}
+
+.period-chart {
+  margin: 10px 10px;
 }

@@ -87,7 +87,12 @@ function getLastPrice(currency, callback) {
         }
     }, function (error, response, body) {
         if (!error && response.statusCode == 200) {
-            callback(JSON.parse(body).last)
+
+            var stats = JSON.parse(body);
+
+            stats.change= (stats.last-stats.open)/stats.open*100;
+
+            callback(stats)
         }
     })
 }
@@ -97,14 +102,48 @@ function calcUSDTotalBalance( balance, callback) {
     getLastPrice('BTC', function (btcPrice) {
         getLastPrice('ETH', function (ethPrice) {
 
-            var total = !isNaN(balance.USD) ? Number(balance.USD) * 1 : 0;
-            total += !isNaN(balance.ETH) ? Number(balance.ETH) * ethPrice : 0;
-            total += !isNaN(balance.BTC) ? Number(balance.BTC) * btcPrice : 0;
+            console.log(ethPrice.last, btcPrice.last)
 
-            callback(total);
+            var total = !isNaN(balance.USD) ? Number(balance.USD) * 1 : 0;
+            total += !isNaN(balance.ETH) ? Number(balance.ETH) * ethPrice.last : 0;
+            total += !isNaN(balance.BTC) ? Number(balance.BTC) * btcPrice.last : 0;
+
+            callback(total,{
+                ETH: ethPrice,
+                BTC: btcPrice
+            });
         })
     })
 }
+
+app.get('/periods/:session_id', (request, response) => {
+    MongoClient.connect(url, function (err, db) {
+        if (err) throw err;
+        db.collection('periods').find({
+            session_id: request.params.session_id,
+        }).sort({time: 1}).limit(100)
+            .toArray(function (err, result) {
+                if (err) throw err;
+
+                //    console.log(result);
+                var needed = result.reduce(function (acc, current) {
+
+                    acc.push({
+                        Date : current.time,
+                        Close : current.close,
+                        rsi : current.rsi,
+                        trend_ema : current.trend_ema,
+                    });
+
+                    return acc;
+                },[])
+
+                db.close();
+                response.send(needed)
+
+            })
+    })
+})
 
 app.get('/chart-data/:selector', (request, response) => {
     MongoClient.connect(url, function (err, db) {
@@ -169,34 +208,62 @@ app.get('/data', (request, response) => {
         if (err) throw err;
 
 
-        db.collection('sessions').find({}).sort({updated: -1}).limit(1)
+        db.collection('sessions').find({
+            updated: {$gt: (new Date()).getTime() - 30000}
+        }).sort({updated: -1})
             .toArray(function (err, result) {
                 if (err) throw err;
             //    console.log(result[0])
 
-                var trade = result[0].selector.split('.')[1];
-                var currencies = trade.split('-');
 
                 var balance = {};
-                balance[currencies[0]] = result[0].balance.asset;
-                balance[currencies[1]] = result[0].balance.currency;
 
-                calcUSDTotalBalance(balance, function (usdTotal) {
-                    result[0].balance.calculated = {
-                        currencies: currencies,
+                result.forEach(function (session) {
+
+                    var trade = session.selector.split('.')[1];
+                    var currencies = trade.split('-');
+
+                    balance[currencies[0]] = session.balance.asset;
+                    balance[currencies[1]] = session.balance.currency;
+
+                })
+
+
+
+                calcUSDTotalBalance(balance, function (usdTotal, stats) {
+                    var totals = {
+                        currencies: Object.keys(balance).sort(function (a,b) {if(a>b) return 1; return -1}),
                         balances: balance,
                         usdTotal: usdTotal,
-                        timeCalculated: (new Date()).getTime()
+                        timeCalculated: (new Date()).getTime(),
+                        stats: stats
                     }
 
+
                     db.collection('my_trades').find({
-                        session_id : result[0].id
-                    }).sort({time: -1}).limit(100)
+                        session_id : {$in: result.map(function (a) {return a.id})}
+                    }).sort({time: 1}).limit(100)
                         .toArray(function (err, result2) {
 
                          //   console.log('RTADES', result2)
 
-                            result[0].myTrades = result2;
+                            result2.forEach(function (trade) {
+                                result.forEach(function (session) {
+                                    if(trade.session_id == session.id) {
+                                        if(!session.trades) session.trades = [];
+
+                                        session.trades.push(trade);
+                                    }
+                                })
+                            })
+
+                            response.send({
+                                sessions:result,
+                                balance: totals
+                            });
+                            db.close();
+
+                            /*
 
                             db.collection('periods').find({
                                 session_id : result[0].id
@@ -207,7 +274,7 @@ app.get('/data', (request, response) => {
                                     response.send(result);
                                     db.close();
 
-                                });
+                                });*/
 
                         });
 

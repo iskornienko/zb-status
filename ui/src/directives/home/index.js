@@ -14,34 +14,154 @@ let app = angular.module('zen-home',[])
                     '$scope', '$http',
                     function ($scope, $http) {
 
-                        var socket = io.connect();
-                        socket.on('connect', function(data) {
-                            console.log('connected')
-                            socket.emit('join', 'Hello World from client');
-                        });
 
-                        socket.on('update', function(data) {
-                            updateData();
-                        });
 
-                        function updateData() {
-                            $http.get('/data').then(function (out) {
-                                console.log(out);
-                                $scope.data = out.data[0];
-                                $scope.keys = Object.keys(out.data[0]);
+                        $scope.balances = [
+                            {
+                                amount: 123,
+                                currency: 'ETH',
+                                dayChange: -0.231
+                            },
+                            {
+                                amount: 123,
+                                currency: 'USD'
+                            },
+                            {
+                                amount: 123,
+                                currency: 'BTC',
+                                dayChange: -0.231
+                            }
+                        ];
 
-                                $scope.stringData = JSON.stringify(out.data[0], null, 4)
+                        $scope.sessions = [
+                            {
+                                id: '231',
+                                selector: 'ETC-BTC',
+                                upTime: '5d3h',
+                                trades: 4,
+                                profit: -23.23,
+                                profit_vs_buy_hold: -2.31
+                            },
+                            {
+                                id: '2312',
+                                selector: 'BTC-USD',
+                                upTime: '2d3h',
+                                trades: 1,
+                                profit: -3.23,
+                                profit_vs_buy_hold: -12.31
+                            },
+                            {
+                                id: '2312',
+                                selector: 'BTC-USD',
+                                upTime: '2d3h',
+                                trades: 1,
+                                profit: -3.23,
+                                profit_vs_buy_hold: -12.31
+                            }
+                        ];
 
-                                $http.get('/chart-data/' + out.data[0].selector)
-                                    .then(function (chartData) {
+
+                        $scope.trades = [
+                            {
+                                buy : {
+                                    price : 123,
+                                    slip: 231,
+                                    size: 111
+                                },
+                                sell : {
+                                    price : 123,
+                                    slip: 231,
+                                    size: 111
+                                }
+                            },
+                            {
+                                buy : {
+                                    price : 23,
+                                    slip: 231,
+                                    size: 111
+                                },
+                                sell : {
+                                    price : 123,
+                                    slip: 231,
+                                    size: 111
+                                }
+                            }
+                        ];
+
+                        $http.get('/data').then(function (out) {
+                            console.log(out);
+                            $scope.data = out.data;
+
+                            $scope.textData = JSON.stringify(out.data);
+
+                            $scope.allPairedTrades = [];
+
+                            //pair buys & sells
+                            for(var x = 0; x < out.data.sessions.length; x++) {
+                                var cSession = out.data.sessions[x];
+
+                                console.log(cSession)
+                                var cPairedTrade = null;
+                                for(var y = 0; y < cSession.trades.length; y++) {
+                                    var cTrade = cSession.trades[y];
+
+                                    console.log(cTrade)
+
+                                    if(cTrade.type == 'buy') {
+
+                                        if(cPairedTrade != null) {
+                                            $scope.allPairedTrades.push(cPairedTrade);
+                                        }
+
+                                        cPairedTrade = {
+                                            session_id: cTrade.session_id,
+                                            buy: cTrade
+                                        }
+
+                                    } else {
+                                        if(cPairedTrade != null) {
+                                            cPairedTrade.sell = cTrade;
+                                        } else {
+                                            cPairedTrade = {
+                                                session_id: cTrade.session_id,
+                                                sell: cTrade
+                                            }
+                                        }
+
+                                    }
+
+                                }
+
+                                if(cPairedTrade != null) {
+                                    $scope.allPairedTrades.push(cPairedTrade);
+                                }
+
+                            }
+
+
+                            for(var x = 0; x < out.data.sessions.length; x++) {
+                                var cSession = out.data.sessions[x];
+
+                                $http.get('/periods/' + cSession.id)
+                                    .then((function (chartData) {
                                         console.log('GOT IT', chartData)
-                                        document.getElementById('spark_goog').innerHTML = '';
-                                        sparkline('#spark_goog', chartData.data, out.data[0].myTrades);
-                                    })
-                            });
-                        }
 
-                        updateData();
+                                        document.getElementById('chart_'+this.cSessionId).innerHTML = '';
+
+                                        for(var x = 0; x < $scope.data.sessions.length; x++) {
+                                            if($scope.data.sessions[x].id == this.cSessionId) {
+                                                sparkline('#chart_'+this.cSessionId, chartData.data, $scope.data.sessions[x].trades);
+                                            }
+                                        }
+
+                                    }).bind({cSessionId:cSession.id}));
+
+                            }
+
+
+                                console.log($scope.allPairedTrades);
+
+                        });
 
                         $scope.printTimeElapsed = function(seconds, shorten) {
 
@@ -75,6 +195,91 @@ let app = angular.module('zen-home',[])
 
                             return printTime;
                         }
+
+
+                        var parseDate = d3.time.format("%b %d, %Y").parse;
+
+                        function sparkline(elemId, data, balances) {
+
+                            var width = d3.select(elemId)[0][0].clientWidth;
+                            var height = 80;
+                            var x = d3.scale.linear().range([0, width - 2]);
+                            var y = d3.scale.linear().range([height - 4, 0]);
+                            var line = d3.svg.line()
+                                .x(function(d) {  return x((new Date(d.Date)).getTime()); })
+                                .y(function(d) {  return y(d.close); });
+
+                            console.log(data, balances);
+
+                            data.forEach(function(d) {
+                                d.date = (new Date(d.Date)).getTime();//parseDate(d.Date);
+                                d.close = +d.Close;
+                            });
+                            //  console.log(data);
+                            x.domain(d3.extent(data, function(d) { return d.date; }));
+                            y.domain(d3.extent(data, function(d) { return d.close; }));
+
+                            var svg = d3.select(elemId)
+                                .append('svg')
+                                .attr('width', width)
+                                .attr('height', height)
+                                .append('g')
+                                .attr('transform', 'translate(0, 2)');
+
+                            svg.append('path')
+                                .datum(data)
+                                .attr('class', 'sparkline')
+                                .attr('d', line);
+
+                            svg.append('circle')
+                                .attr('class', 'sparkcircle')
+                                .attr('cx', x(data[data.length-1].date))
+                                .attr('cy', y(data[data.length-1].close))
+                                .attr('r', 2);
+
+
+                            svg.append('g').selectAll("line")
+                                .data(balances)
+                                .enter()
+                                .append("line")
+                                .attr("x1", function (d) {return x(d.time)})
+                                .attr("y1", 0)
+                                .attr("x2", function (d) {return x(d.time)})
+                                .attr("y2", height)
+                        }
+                        
+
+
+                        /*
+                        var socket = io.connect();
+                        socket.on('connect', function(data) {
+                            console.log('connected')
+                            socket.emit('join', 'Hello World from client');
+                        });
+
+                        socket.on('update', function(data) {
+                            updateData();
+                        });
+
+                        function updateData() {
+                            $http.get('/data').then(function (out) {
+                                console.log(out);
+                                $scope.data = out.data[0];
+                                $scope.keys = Object.keys(out.data[0]);
+
+                                $scope.stringData = JSON.stringify(out.data[0], null, 4)
+
+                                $http.get('/chart-data/' + out.data[0].selector)
+                                    .then(function (chartData) {
+                                        console.log('GOT IT', chartData)
+                                        document.getElementById('spark_goog').innerHTML = '';
+                                        sparkline('#spark_goog', chartData.data, out.data[0].myTrades);
+                                    })
+                            });
+                        }
+
+                        updateData();
+
 
 
                         var width = 300;
@@ -126,8 +331,9 @@ let app = angular.module('zen-home',[])
                                 .attr("x2", function (d) {return x(d.time)})
                                 .attr("y2", height)
                         }
-
+*/
                     }
+
                 ]
         }}
     ])

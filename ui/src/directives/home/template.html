@@ -1,4 +1,91 @@
 <div class="zenbot-home">
+    <div class="section-header">Active Session Balance</div>
+    <div class="usd-total">{{data.balance.usdTotal | currency: '$'}}</div>
+    <div class="balances">
+        <div class="balance" ng-repeat="currency in data.balance.currencies">
+            <div class="amount">{{data.balance.balances[currency] | number: 2}}</div>
+            <div class="currency">{{currency}}</div>
+            <div class="day-change" ng-if="data.balance.stats[currency] != undefined"
+                 ng-class="{'red-text' : data.balance.stats[currency].change < 0, 'green-text' : data.balance.stats[currency].change > 0}">
+                {{data.balance.stats[currency].change | number: 1}}%</div>
+        </div>
+    </div>
+
+    <div class="section-header">Sessions</div>
+    <div class="sessions-header">
+        <div class="s-col">Selector</div>
+        <div class="s-col">Status</div>
+        <div class="s-col">Activity</div>
+        <div class="s-col">Profit</div>
+    </div>
+    <div class="sessions">
+        <div class="session" ng-repeat="session in data.sessions">
+            <div class="session-head">
+                <div class="s-col">{{session.selector.split('.')[1]}}</div>
+                <div class="s-col">
+                    <div class="value">{{printTimeElapsed((session.updated-session.started)/1000)}}</div>
+                    <div class="sub-title">up time</div>
+                </div>
+                <div class="s-col">
+                    <div class="value">{{session.num_trades}}</div>
+                    <div class="sub-title">trades</div>
+                </div>
+                <div class="s-col">
+                    <div class="value" ng-class="{'red-text' : session.balance.profit < 0, 'green-text' : session.balance.profit > 0}">{{session.balance.profit*100 | number : 1}}%</div>
+                    <div class="sub-title" ng-class="{'red-text' : session.balance.vs_buy_hold < 0, 'green-text' : session.balance.vs_buy_hold > 0}">{{session.balance.vs_buy_hold*100 | number : 1}}% v. b&h</div>
+                </div>
+            </div>
+            <div class="session-body">
+                  <div class="period-chart" id="chart_{{session.id}}">
+
+                  </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section-header">Trades</div>
+    <div class="sessions-header trade-buy-sell">
+        <div class="s-col left-align">Buy</div>
+        <div class="s-col right-align">Sell</div>
+    </div>
+    <div class="sessions-header">
+        <div class="s-col left-align">Time</div>
+        <div class="s-col left-align">Price</div>
+        <div class="s-col">Change</div>
+        <div class="s-col right-align">Price</div>
+        <div class="s-col right-align">Time</div>
+    </div>
+    <div class="sessions">
+        <div class="session" ng-repeat="trade in allPairedTrades | orderBy: 'buy.time' : true" ng-click="trade.showDetails=!trade.showDetails">
+            <div class="session-head">
+                <div class="s-col left-align">{{trade.buy.time | date : 'M/dd HH:mm'}}</div>
+                <div class="s-col left-align" ng-class="{'red-text' : trade.buy.price > trade.sell.price, 'green-text' : trade.buy.price < trade.sell.price}">{{trade.buy.price | number : 2}}</div>
+                <div class="s-col" ng-class="{'red-text' : trade.buy.price > trade.sell.price, 'green-text' : trade.buy.price < trade.sell.price}">
+                    <b ng-if="trade.buy != undefined && trade.sell != undefined">{{((trade.sell.price*trade.sell.size)-(trade.buy.price*trade.buy.size))/(trade.sell.price*trade.sell.size)*100 | number : 2}}%</b>
+                </div>
+                <div class="s-col right-align sell" ng-class="{'red-text' : trade.buy.price > trade.sell.price, 'green-text' : trade.buy.price < trade.sell.price}">{{trade.sell.price | number : 2}}</div>
+                <div class="s-col right-align sell">{{trade.sell.time | date : 'M/dd HH:mm'}}</div>
+            </div>
+            <div class="session-body" ng-show="trade.showDetails">
+                <div class="property-list">
+                    <div class="property" ng-if="trade.buy != undefined">
+                        <div class="name">Buy Slippage</div>
+                        <div class="value">{{trade.buy.slippage*100 | number:2}}%</div>
+                    </div>
+                    <div class="property" ng-if="trade.sell != undefined">
+                        <div class="name">Sell Slippage</div>
+                        <div class="value">{{trade.sell.slippage*100 | number:2}}%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!--
+    {{textData}}
+    -->
+
+<!--
     <div class="status-header"
         ng-class="{'error': data.balance.calculated.timeCalculated-data.updated > 1000*60*2}">
        <span class="left">
@@ -89,6 +176,6 @@
     </table>
 
     <br><br><br><br>
-    {{stringData}}
+    -->
 
 </div>
