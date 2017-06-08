@@ -121,7 +121,7 @@ app.get('/periods/:session_id', (request, response) => {
         if (err) throw err;
         db.collection('periods').find({
             session_id: request.params.session_id,
-        }).sort({time: 1}).limit(100)
+        }).sort({time: -1}).limit(100)
             .toArray(function (err, result) {
                 if (err) throw err;
 
@@ -138,7 +138,14 @@ app.get('/periods/:session_id', (request, response) => {
                     });
 
                     return acc;
-                },[])
+                },[]);
+
+                needed = needed.sort(function (a,b) {
+                    if(a.Date > b.Date)
+                        return 1;
+                    else
+                        return -1;
+                })
 
                 db.close();
                 response.send(needed)
