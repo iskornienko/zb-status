@@ -148,6 +148,7 @@ let app = angular.module('zen-home',[])
                             console.log(data)
                             $scope.data.stats = data;
                             calculateBalance();
+                            $scope.$apply();
                         });
                         socket.on('new_trade', function(data) {
                             console.log(data.trade);
@@ -163,6 +164,7 @@ let app = angular.module('zen-home',[])
                                     buildTradePairs();
                                 }
                             });
+                            $scope.$apply();
 
                         });
 
