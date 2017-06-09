@@ -1,13 +1,13 @@
 <div class="zenbot-home">
     <div class="section-header">Active Session Balance</div>
-    <div class="usd-total">{{data.balance.usdTotal | currency: '$'}}</div>
+    <div class="usd-total">{{usdTotal | currency: '$'}}</div>
     <div class="balances">
-        <div class="balance" ng-repeat="currency in data.balance.currencies">
-            <div class="amount">{{data.balance.balances[currency] | number: 2}}</div>
-            <div class="currency">{{currency}}</div>
-            <div class="day-change" ng-if="data.balance.stats[currency] != undefined"
-                 ng-class="{'red-text' : data.balance.stats[currency].change < 0, 'green-text' : data.balance.stats[currency].change > 0}">
-                {{data.balance.stats[currency].change | number: 1}}%</div>
+        <div class="balance" ng-repeat="balance in data.balance">
+            <div class="amount">{{balance.amount | number: 2}}</div>
+            <div class="currency">{{balance.currency}}</div>
+            <div class="day-change" ng-if="balance.change != undefined"
+                 ng-class="{'red-text' : balance.change < 0, 'green-text' : balance.change > 0}">
+                {{balance.change | number: 2}}%</div>
         </div>
     </div>
 
@@ -23,7 +23,7 @@
                 <div class="s-col">Profit</div>
             </div>
             <div class="sessions">
-                <div class="session" ng-repeat="session in data.sessions">
+                <div class="session" ng-repeat="session in data.sessions" ng-class="{'selected': selectedSession == session}" ng-click="selectSession($index)">
                     <div class="session-head">
                         <div class="s-col">{{session.selector.split('.')[1]}}</div>
                         <div class="s-col">
@@ -46,7 +46,7 @@
                         <div class="property-list">
                             <div class="property">
                                 <div class="name">Price</div>
-                                <div class="value">{{session.currentPeriod.close | number:3}}</div>
+                                <div class="value">{{session.currentPeriod.close | number:4}}</div>
                             </div>
                             <div class="property" style="color:#337ab7">
                                 <div class="name">RSI</div>
@@ -54,7 +54,7 @@
                             </div>
                             <div class="property" style="color:#d38312">
                                 <div class="name">EMA</div>
-                                <div class="value">{{session.currentPeriod.trend_ema | number:3}}</div>
+                                <div class="value">{{session.currentPeriod.trend_ema | number:4}}</div>
                             </div>
                             <div class="property">
                                 <div class="name">Volume</div>
@@ -62,7 +62,7 @@
                             </div>
                             <div class="property">
                                 <div class="name">EMA Rate</div>
-                                <div class="value">{{session.currentPeriod.trend_ema_rate | number:3}}</div>
+                                <div class="value">{{session.currentPeriod.trend_ema_rate | number:4}}</div>
                             </div>
                         </div>
                     </div>
@@ -85,7 +85,7 @@
                 <div class="s-col right-align">Time</div>
             </div>
             <div class="sessions">
-                <div class="session" ng-repeat="trade in allPairedTrades | orderBy: 'buy.time' : true" ng-click="trade.showDetails=!trade.showDetails">
+                <div class="session" ng-repeat="trade in allPairedTrades | orderBy: 'buy.time' : true | filter:{session_id:selectedSession.id}" ng-click="trade.showDetails=!trade.showDetails">
                     <div class="session-head">
                         <div class="s-col left-align">{{trade.buy.time | date : 'M/dd HH:mm'}}</div>
                         <div class="s-col left-align" ng-class="{'red-text' : trade.buy.price > trade.sell.price, 'green-text' : trade.buy.price < trade.sell.price}">{{trade.buy.price | number : 3}}</div>
@@ -127,6 +127,12 @@
             </div>
 
         </div>
+
+    <div>
+        <div ng-repeat="(key,val) in selectedSession.options">
+            <b>{{key}}</b>: {{val}}
+        </div>
+    </div>
 
     </div>
 

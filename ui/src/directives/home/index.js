@@ -90,7 +90,7 @@ let app = angular.module('zen-home',[])
 
                         console.log('HAI');
 
-
+                        $scope.chartData = [];
 
                          var socket = io.connect();
                          socket.on('connect', function(data) {
@@ -98,65 +98,170 @@ let app = angular.module('zen-home',[])
                          socket.emit('join', 'Hello World from client');
                          });
 
-                         socket.on('update', function(data) {
-                         updateData();
-                         });
 
-                        function updateData() {
-                            $http.get('/data').then(function (out) {
-                                $scope.data = out.data;
+                        function processPeriodUpdate(data,isUpdate) {
+                            console.log('UPDATED')
+                            console.log(data)
+                            console.log($scope.data.sessions)
 
-                                $scope.textData = JSON.stringify(out.data);
+                            $scope.data.sessions.forEach(function (session) {
+                                if(session.id == data.period.session_id) {
+                                    session.currentPeriod = data.period;
 
-                                $scope.allPairedTrades = [];
-                                console.log('about to process data', out);
+                                    session.balance = data.session.balance;
+                                    session.num_trades = data.session.num_trades;
+                                    session.updated = data.session.updated;
 
-                                //pair buys & sells
-                                for(var x = 0; x < out.data.sessions.length; x++) {
-                                    var cSession = out.data.sessions[x];
+                                    if(isUpdate) {
+                                        $scope.chartData[data.period.session_id].forEach(function (period,x,y) {
+                                            if(period.id == data.period.id) {
+                                            //    console.log('found match',x, period.id)
+                                            //    console.log('found match',x, period.id, $scope.chartData[x-1].id)
+                                            //    var oldRsi = $scope.chartData[x].rsi;
+                                                $scope.chartData[data.period.session_id][x] = data.period;
 
-                                    console.log('processing session', cSession)
-                                    var cPairedTrade = null;
-                                    if(cSession.trades != undefined) {
+                                            //    $scope.chartData[x].rsi = $scope.chartData[x].rsi == undefined ? oldRsi : $scope.chartData[x].rsi;
+                                            }
 
-                                        for(var y = 0; y < cSession.trades.length; y++) {
-                                            var cTrade = cSession.trades[y];
+                                        })
+                                    } else {
+                                        $scope.chartData[data.period.session_id].push(data.period)
+                                    }
 
-                                            console.log('processing trade', cTrade)
+                                    console.log(data.period.session_id, $scope.chartData[data.period.session_id])
+                                    document.getElementById('chart_'+data.period.session_id).innerHTML = '';
+                                    sparkline('#chart_'+data.period.session_id, $scope.chartData[data.period.session_id], session.trades);
+                                }
+                            })
 
-                                            if(cTrade.type == 'buy') {
+                            $scope.$apply();
 
-                                                if(cPairedTrade != null) {
-                                                    $scope.allPairedTrades.push(cPairedTrade);
-                                                }
+                        }
 
+                        socket.on('period_updated', function(data) {
+                            processPeriodUpdate(data, true)
+                        });
+                        socket.on('period_added', function(data) {
+                            processPeriodUpdate(data, false)
+                        });
+                        socket.on('update_stats', function(data) {
+                            console.log(data)
+                            $scope.data.stats = data;
+                            calculateBalance();
+                        });
+                        socket.on('new_trade', function(data) {
+                            console.log(data.trade);
+
+                            $scope.data.sessions.forEach(function (session) {
+                                if (session.id == data.trade.session_id) {
+
+                                    session.balance = data.session.balance;
+                                    session.num_trades = data.session.num_trades;
+                                    session.updated = data.session.updated;
+
+                                    session.trades.push(data.trade);
+                                    buildTradePairs();
+                                }
+                            });
+
+                        });
+
+
+                        function calculateBalance() {
+                            var balances = [];
+                            $scope.data.sessions.forEach(function (session) {
+                                var currencies = session.balance.selector.split('.')[1].split('-');
+
+                                balances[currencies[0]] = {
+                                    currency: currencies[0],
+                                    amount: session.balance.asset,
+                                    change: $scope.data.stats[currencies[0]].change,
+                                    last: $scope.data.stats[currencies[0]].last
+                                }
+
+                                balances[currencies[1]] = {
+                                    currency: currencies[1],
+                                    amount: session.balance.currency,
+                                    change: $scope.data.stats[currencies[1]] ? $scope.data.stats[currencies[1]].change : null,
+                                    last: $scope.data.stats[currencies[0]].last
+                                }
+
+                            })
+
+                            $scope.usdTotal = 0;
+
+                            $scope.data.balance = [];
+                            for(var x in balances) {
+
+                                $scope.usdTotal += balances[x].amount*balances[x].last;
+
+                                $scope.data.balance.push(balances[x]);
+                            }
+                        }
+
+                        function buildTradePairs() {
+
+                            $scope.allPairedTrades = [];
+
+                            var out = $scope;
+
+                            //pair buys & sells
+                            for(var x = 0; x < out.data.sessions.length; x++) {
+                                var cSession = out.data.sessions[x];
+
+                                console.log('processing session', cSession)
+                                var cPairedTrade = null;
+                                if(cSession.trades != undefined) {
+
+                                    for(var y = 0; y < cSession.trades.length; y++) {
+                                        var cTrade = cSession.trades[y];
+
+                                        console.log('processing trade', cTrade)
+
+                                        if(cTrade.type == 'buy') {
+
+                                            if(cPairedTrade != null) {
+                                                $scope.allPairedTrades.push(cPairedTrade);
+                                            }
+
+                                            cPairedTrade = {
+                                                session_id: cTrade.session_id,
+                                                buy: cTrade
+                                            }
+
+                                        } else {
+                                            if(cPairedTrade != null) {
+                                                cPairedTrade.sell = cTrade;
+                                            } else {
                                                 cPairedTrade = {
                                                     session_id: cTrade.session_id,
-                                                    buy: cTrade
+                                                    sell: cTrade
                                                 }
-
-                                            } else {
-                                                if(cPairedTrade != null) {
-                                                    cPairedTrade.sell = cTrade;
-                                                } else {
-                                                    cPairedTrade = {
-                                                        session_id: cTrade.session_id,
-                                                        sell: cTrade
-                                                    }
-                                                }
-
                                             }
 
                                         }
 
                                     }
 
-                                    if(cPairedTrade != null) {
-                                        $scope.allPairedTrades.push(cPairedTrade);
-                                    }
-
                                 }
 
+                                if(cPairedTrade != null) {
+                                    $scope.allPairedTrades.push(cPairedTrade);
+                                }
+
+                            }
+                        }
+
+                        function updateData() {
+                            $http.get('/data').then(function (out) {
+                                $scope.data = out.data;
+                                calculateBalance();
+
+                                $scope.textData = JSON.stringify(out.data);
+
+                                console.log('about to process data', out);
+
+                                buildTradePairs();
 
                                 for(var x = 0; x < out.data.sessions.length; x++) {
                                     var cSession = out.data.sessions[x];
@@ -169,7 +274,10 @@ let app = angular.module('zen-home',[])
 
                                             for(var x = 0; x < $scope.data.sessions.length; x++) {
                                                 if($scope.data.sessions[x].id == this.cSessionId) {
-                                                    sparkline('#chart_'+this.cSessionId, chartData.data, $scope.data.sessions[x].trades);
+
+                                                    $scope.chartData[this.cSessionId] = chartData.data;
+
+                                                    sparkline('#chart_'+this.cSessionId, $scope.chartData[this.cSessionId], $scope.data.sessions[x].trades);
 
                                                     $scope.data.sessions[x].currentPeriod = chartData.data[chartData.data.length-1];
 
@@ -187,6 +295,15 @@ let app = angular.module('zen-home',[])
                             });
                         }
                         updateData();
+
+
+                        $scope.selectSession = function($index) {
+                            if($scope.selectedSession == $scope.data.sessions[$index]) {
+                                $scope.selectedSession = null;
+                            } else {
+                                $scope.selectedSession = $scope.data.sessions[$index];
+                            }
+                        }
 
                         $scope.printTimeElapsed = function(seconds, shorten) {
 
@@ -228,7 +345,7 @@ let app = angular.module('zen-home',[])
                         function addLineToChart(svg, height,x, data, variable, color, strokeWidth) {
 
                             var line = d3.svg.line()
-                                .x(function(d) {  return x((new Date(d.Date)).getTime()); })
+                                .x(function(d) {  return x((new Date(d.time)).getTime()); })
                                 .y(function(d) {  return y(d[variable]); });
                             var y = d3.scale.linear().range([height - 4, 0]);
 
@@ -246,7 +363,7 @@ let app = angular.module('zen-home',[])
 
                             svg.append('circle')
                                 .attr('class', 'sparkcircle')
-                                .attr('cx', x(data[data.length-1].date))
+                                .attr('cx', x(data[data.length-1].time))
                                 .attr('cy', function () {
                                     if(data[data.length-1][variable] != undefined)
                                         return y(data[data.length-1][variable]);
@@ -266,12 +383,7 @@ let app = angular.module('zen-home',[])
 
                             console.log(data, balances);
 
-                            data.forEach(function(d) {
-                                d.date = (new Date(d.Date)).getTime();//parseDate(d.Date);
-                                d.close = +d.Close;
-                            });
-                            //  console.log(data);
-                            x.domain(d3.extent(data, function(d) { return d.date; }));
+                            x.domain(d3.extent(data, function(d) { return d.time; }));
 
                             var svg = d3.select(elemId)
                                 .append('svg')

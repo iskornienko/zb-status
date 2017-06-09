@@ -28,7 +28,10 @@ oplog2.tail().then(() => {
 }).catch(err => console.error(err));
 
 var lastUpdate = new Date();
-function refreshFrontEnd(event) {
+function refreshFrontEnd(event, doc) {
+
+    console.log(doc)
+/*
     if((new Date()).getTime() - lastUpdate.getTime() > 1000*3) {
         lastUpdate = new Date();
         console.log(event, lastUpdate);
@@ -41,20 +44,56 @@ function refreshFrontEnd(event) {
         })
 
     }
+    */
+}
+
+function getSessionObj(sessionId, callback) {
+    MongoClient.connect(url, function (err, db) {
+        if (err) throw err;
+        db.collection('sessions').find({
+            id: sessionId,
+        }).limit(1)
+            .toArray(function (err, result) {
+                callback(result[0]);
+            })
+    })
+
 }
 
 oplog.on('insert', doc => {
-    refreshFrontEnd('INSERT PERIOD');
-})
+    allClients.forEach(function (client) {
+        getSessionObj(doc.o.session_id, function (session) {
+            client.emit('period_added',{
+                period:doc.o,
+                session: session
+            });
+        })
 
-oplog2.on('insert', doc => {
-    refreshFrontEnd('NEW TRADE');
+    })
 })
 
 oplog.on('update', doc => {
-    refreshFrontEnd('UPDATE PERIOD');
+    allClients.forEach(function (client) {
+        getSessionObj(doc.o.session_id, function (session) {
+            client.emit('period_updated',{
+                period:doc.o,
+                session: session
+            });
+        })
+    })
 
 });
+
+oplog2.on('insert', doc => {
+    allClients.forEach(function (client) {
+      //  getSessionObj(doc.o.session_id, function (session) {
+            client.emit('new_trade',{
+                trade:doc.o,
+            //    session: session
+            });
+      //  })
+    })
+})
 
 
 var allClients = [];
@@ -63,11 +102,7 @@ io.on('connection', function(socket) {
     allClients.push(socket);
 
 
-    /*
-    client.on('join', function(data) {
-        console.log(data);
 
-    });*/
     socket.on('disconnect', function() {
         console.log('Got disconnect!');
 
@@ -77,6 +112,16 @@ io.on('connection', function(socket) {
 
 });
 
+
+setInterval(function () {
+    console.log('CLIENTS: ', allClients.length)
+    if(allClients.length > 0)
+        calcUSDTotalBalance(function (stats) {
+            allClients.forEach(function (client) {
+                client.emit('update_stats',stats);
+            })
+        })
+},5000);
 
 
 function getLastPrice(currency, callback) {
@@ -97,18 +142,11 @@ function getLastPrice(currency, callback) {
     })
 }
 
-function calcUSDTotalBalance( balance, callback) {
-
+//function calcUSDTotalBalance( balance, callback) {
+function calcUSDTotalBalance(callback) {
     getLastPrice('BTC', function (btcPrice) {
         getLastPrice('ETH', function (ethPrice) {
-
-            console.log(ethPrice.last, btcPrice.last)
-
-            var total = !isNaN(balance.USD) ? Number(balance.USD) * 1 : 0;
-            total += !isNaN(balance.ETH) ? Number(balance.ETH) * ethPrice.last : 0;
-            total += !isNaN(balance.BTC) ? Number(balance.BTC) * btcPrice.last : 0;
-
-            callback(total,{
+            callback({
                 ETH: ethPrice,
                 BTC: btcPrice
             });
@@ -128,20 +166,13 @@ app.get('/periods/:session_id', (request, response) => {
                 //    console.log(result);
                 var needed = result.reduce(function (acc, current) {
 
-                    acc.push({
-                        Date : current.time,
-                        Close : current.close,
-                        rsi : current.rsi,
-                        trend_ema : current.trend_ema,
-                        volume : current.volume,
-                        trend_ema_rate : current.trend_ema_rate,
-                    });
+                    acc.push(current);
 
                     return acc;
                 },[]);
 
                 needed = needed.sort(function (a,b) {
-                    if(a.Date > b.Date)
+                    if(a.time > b.time)
                         return 1;
                     else
                         return -1;
@@ -153,7 +184,7 @@ app.get('/periods/:session_id', (request, response) => {
             })
     })
 })
-
+/*
 app.get('/chart-data/:selector', (request, response) => {
     MongoClient.connect(url, function (err, db) {
         if (err) throw err;
@@ -182,7 +213,7 @@ app.get('/chart-data/:selector', (request, response) => {
             })
     })
 })
-
+*/
 
     /*
      zb3 logic
@@ -222,31 +253,19 @@ app.get('/data', (request, response) => {
         }).sort({updated: -1})
             .toArray(function (err, result) {
                 if (err) throw err;
-            //    console.log(result[0])
 
 
-                var balance = {};
+       //         calcUSDTotalBalance(balance, function (usdTotal, stats) {
+                calcUSDTotalBalance(function (stats) {
 
-                result.forEach(function (session) {
-
-                    var trade = session.selector.split('.')[1];
-                    var currencies = trade.split('-');
-
-                    balance[currencies[0]] = session.balance.asset;
-                    balance[currencies[1]] = session.balance.currency;
-
-                })
-
-
-
-                calcUSDTotalBalance(balance, function (usdTotal, stats) {
+                    /*
                     var totals = {
                         currencies: Object.keys(balance).sort(function (a,b) {if(a>b) return 1; return -1}),
                         balances: balance,
                         usdTotal: usdTotal,
                         timeCalculated: (new Date()).getTime(),
                         stats: stats
-                    }
+                    }*/
 
 
                     db.collection('my_trades').find({
@@ -268,7 +287,7 @@ app.get('/data', (request, response) => {
 
                             response.send({
                                 sessions:result,
-                                balance: totals
+                                stats: stats
                             });
                             db.close();
 
