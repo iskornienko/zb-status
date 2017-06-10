@@ -195,10 +195,14 @@ let app = angular.module('zen-home',[])
                             $scope.data.balance = [];
                             for(var x in balances) {
 
-                                $scope.usdTotal += balances[x].amount*balances[x].last;
+                                $scope.usdTotal += Number(balances[x].amount)*Number(balances[x].last);
+                                console.log($scope.usdTotal)
 
                                 $scope.data.balance.push(balances[x]);
                             }
+
+                            console.log($scope.data.balance);
+
                         }
 
                         function buildTradePairs() {
