@@ -185,7 +185,7 @@ let app = angular.module('zen-home',[])
                                     currency: currencies[1],
                                     amount: session.balance.currency,
                                     change: $scope.data.stats[currencies[1]] ? $scope.data.stats[currencies[1]].change : null,
-                                    last: $scope.data.stats[currencies[0]].last
+                                    last: $scope.data.stats[currencies[1]].last
                                 }
 
                             })
