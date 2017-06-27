@@ -154,6 +154,88 @@ function calcUSDTotalBalance(callback) {
     })
 }
 
+
+function getDailyData(currency, callback) {
+    console.log(currency)
+    request({
+        url: 'https://poloniex.com/public?command=returnChartData&currencyPair='+currency+'&start=1459900800&end=9999999999&period=86400',
+        headers: {
+            'User-Agent': 'request'
+        }
+    }, function (error, res, body) {
+        if (!error && res.statusCode == 200) {
+
+            var body = JSON.parse(body);
+
+            callback(body)
+        }
+    })
+}
+
+
+function getWeekNumber(d) {
+    // Copy date so don't modify original
+    d = new Date(+d);
+    d.setHours(0,0,0,0);
+    // Set to nearest Thursday: current date + 4 - current day number
+    // Make Sunday's day number 7
+    d.setDate(d.getDate() + 4 - (d.getDay()||7));
+    // Get first day of year
+    var yearStart = new Date(d.getFullYear(),0,1);
+    // Calculate full weeks to nearest Thursday
+    var weekNo = Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
+    // Return array of year and week number
+    return [d.getFullYear(), weekNo];
+}
+
+
+
+function getDailyChanges(currency, callback) {
+
+    getDailyData(currency, function (data) {
+
+        var weeks = [];
+
+        for (var x =0; x < data.length; x++) {
+
+            var dayOfWeek = (new Date(data[x].date*1000)).getDay();
+            var weekOfYear = getWeekNumber((new Date(data[x].date*1000)));
+
+            var wkId = weekOfYear[0]+'-'+weekOfYear[1];
+
+            if(!weeks[wkId])
+                weeks[wkId] = [];
+
+            weeks[wkId][dayOfWeek] = {
+                date: data[x].date,
+                change: (data[x].close-data[x].open)/data[x].open*100
+            }
+
+        }
+
+        var weekArray = [];
+        for(var x in weeks) {
+            weekArray.push({
+                week: x,
+                days: weeks[x]
+            })
+        }
+
+        callback(weekArray)
+
+    });
+}
+
+
+app.get('/weekly-data/:symbol', (rq, response) => {
+
+    getDailyChanges(rq.params.symbol, function (data) {
+        response.send(data);
+    })
+
+});
+
+
 app.get('/periods/:session_id', (request, response) => {
     MongoClient.connect(url, function (err, db) {
         if (err) throw err;

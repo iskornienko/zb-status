@@ -2,9 +2,10 @@
 import 'angular';
 
 import zenHome from './directives/home'
+import weekChart from './directives/week-chart'
 
 
-angular.module('zenbot-ui',[zenHome])
+angular.module('zenbot-ui',[zenHome,weekChart])
     .controller('AppCtrl', [
         '$scope',
         function ($scope) {
