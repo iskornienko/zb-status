@@ -20,7 +20,7 @@ In Dev:
 
 `npm install`
 
-`npm run dev`
+`npm run dev` & open browser to http://localhost:3000/
 
 In Prod:
 
